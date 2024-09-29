@@ -1,118 +1,113 @@
 import streamlit as st
 import pandas as pd
-import plotly.graph_objects as go
 import plotly.express as px
+import joblib
+import os
 
 def app():
-    st.title('Grafik IPKD')  
+    # Fungsi untuk memuat model
+    @st.cache_resource
+    def load_model():
+        try:
+            return joblib.load('voting_classifier_model.pkl')
+        except Exception as e:
+            st.error(f"Error loading the model: {e}")
+            return None
 
-    # File upload for IPKD data
-    uploaded_ipkd_file = st.file_uploader("Upload File IPKD (Excel)", type=["xlsx"])
-    if uploaded_ipkd_file is not None:
-        df_ipkd = pd.read_excel(uploaded_ipkd_file, sheet_name='Hasil_Akhir')
+    # Fungsi untuk memuat data
+    @st.cache_data
+    def load_data(file):
+        data = pd.read_excel(file)
+        data['Tahun'] = data['Tahun'].astype(str)
+        # Format column names to have only the first letter capitalized
+        data.columns = [col.title() for col in data.columns]
+        return data
+    # Set page title
+    st.title("Visualisasi Data")
+    # File upload section
+    uploaded_file = st.file_uploader("Silahkan Upload file Excel", type=['xlsx'])
+    if uploaded_file is not None:
+        data = load_data(uploaded_file)
     else:
-        df_ipkd = pd.read_excel('source/ipkd_results.xlsx')  # Default file
+        current_dir = os.path.dirname(__file__)
+        file_path = os.path.join(current_dir, "source/kota_kabupaten.xlsx")
+        data = load_data(file_path)
 
-    # File upload for percentage data
-    uploaded_percentage_file = st.file_uploader("Upload File Persentase (CSV)", type=["csv"])
-    if uploaded_percentage_file is not None:
-        df_percentage = pd.read_csv(uploaded_percentage_file)
-    else:
-        df_percentage = pd.read_csv('source/datasetreal.csv')  # Default file
+    # Debugging: Print columns
+    st.write("Kolom pada dataset:", data.columns)  # Print column names for debugging
 
-    # Extract unique provinces and cities/districts
-    unique_provinces = df_ipkd['Provinsi'].str.upper().unique()
-    unique_cities = df_ipkd['Kota/Kabupaten'].str.upper().unique()
+    # Sidebar untuk memilih region
+    if 'Provinsi' not in data.columns:
+        st.error("Column 'Provinsi' not found in the data!")
+        return  # Exit if column is missing
 
-    # PEMILIHAN #
-    provinsi = st.selectbox('Pilih Provinsi', unique_provinces, key='provinsi_selectbox')
-    
-    # Filter cities based on the selected province
-    filtered_cities = df_ipkd[df_ipkd['Provinsi'].str.upper() == provinsi]['Kota/Kabupaten'].str.upper().unique()
-    kota = st.selectbox('Pilih Kota/Kabupaten', filtered_cities, key='kota_selectbox')
+    regions = data['Provinsi'].unique()
+    region = st.selectbox("Pilih Wilayah", regions)
 
-    kolom_list = ['Kesehatan Balita', 'Kesehatan Reproduksi', 'Pelayanan Kesehatan', 
-                  'Penyakit Tidak Menular', 'Penyakit Menular', 'Sanitasi dan Keadaan Lingkungan Hidup']
+    # Filter data berdasarkan wilayah
+    region_data = data[data['Provinsi'] == region]
 
-    field = st.selectbox('Pilih Kolom', kolom_list, key='field_selectbox')
-
-    st.subheader(f'Nilai IPKD Provinsi {provinsi} di {kota}')
-
-    st.subheader(f'kolom {field}')
-
-    # MENAMPILKAN PLOT #
-    # Ensure that comparisons are made correctly
-    if 'Kota' in kota:
-        data = df_ipkd[df_ipkd['Kota/Kabupaten'].str.upper() == kota.upper()]
-    else:
-        data = df_ipkd[df_ipkd['Kota/Kabupaten'].str.upper() == kota.upper()]
-
-    tahun = data['Tahun'].astype(str).str[:4].tolist()
-    value = data[field].tolist()
-
-    # Using Plotly to create an interactive graph
-    fig = go.Figure()
-    fig.add_trace(go.Scatter(x=tahun, y=value, mode='lines+markers', name=field, line=dict(color='red', width=2)))
-    
-    fig.update_layout(
-        title=dict(text=f"Grafik {field} di {kota} ({provinsi})", font=dict(color='black', size=20)),
-        xaxis_title=dict(text='Tahun', font=dict(color='black', size=14, family="Arial", weight="bold")),
-        yaxis_title=dict(text='Nilai', font=dict(color='black', size=14, family="Arial", weight="bold")),
-        template='plotly_dark',
-        plot_bgcolor='rgba(0,0,0,0)',
-        paper_bgcolor='white',
-        font=dict(color='black', weight="bold"),
-        xaxis=dict(tickfont=dict(color='black')),
-        yaxis=dict(tickfont=dict(color='black'))
-    )
-
-    st.plotly_chart(fig)
-
-    # TAMPILAN TABEL
-    st.subheader('Tabel')
-    tampilan_data = data[['Provinsi', 'Kota/Kabupaten', field, 'Tahun']]
-    st.write(tampilan_data)
-
-    # Langkah 1: Pilih Provinsi for percentage data
-    unique_provinces_percentage = df_percentage['PROVINSI'].str.upper().unique()
-    provinsi_percentage = st.selectbox("Pilih Provinsi untuk Persentase", unique_provinces_percentage)
-
-    # Langkah 2: Pilih Kabupaten/Kota berdasarkan Provinsi
-    filtered_kabupaten = df_percentage[df_percentage['PROVINSI'].str.upper() == provinsi_percentage]['KOTA/KABUPATEN'].str.upper().unique()
-    kabupaten = st.selectbox("Pilih Kabupaten/Kota", filtered_kabupaten)
-
-    # Langkah 3: Pilih opsi untuk grafik
-    # You can automate the options for the graph based on the columns in the DataFrame
-    options_for_graph = df_percentage.columns.tolist()
-    options_for_graph.remove('PROVINSI')  # Exclude the province column
-    options_for_graph.remove('KOTA/KABUPATEN')  # Exclude the city/district column
-    options_for_graph.remove('TAHUN')  # Exclude the year column
-    pilihan_grafik = st.selectbox("Pilih Data untuk Ditampilkan", options_for_graph)
-
-    # Filter data berdasarkan pilihan pengguna
-    if 'PROVINSI' in df_percentage.columns and 'KOTA/KABUPATEN' in df_percentage.columns:
-        df_filtered = df_percentage[(df_percentage['PROVINSI'] == provinsi_percentage) & (df_percentage['KOTA/KABUPATEN'] == kabupaten)]
-
-        # Langkah 4: Tampilkan grafik berdasarkan pilihan
-        if not df_filtered.empty:
-            st.write(f"Menampilkan grafik {pilihan_grafik} untuk {kabupaten}, {provinsi_percentage}")
-            
-            # Plot data dengan Plotly
-            fig = px.line(df_filtered, x='TAHUN', y=pilihan_grafik, markers=True)
-            fig.update_traces(line=dict(color='red', width=2))  
-            fig.update_layout(
-                title=dict(text=f"Grafik {pilihan_grafik} di {kabupaten} ({provinsi_percentage})", font=dict(color='black', size=20)),
-                xaxis_title=dict(text='Tahun', font=dict(color='black', size=14, family="Arial", weight="bold")),
-                yaxis_title=dict(text='Nilai (%)', font=dict(color='black', size=14, family="Arial", weight="bold")),
-                template='plotly_dark',
-                plot_bgcolor='rgba(0,0,0,0)',
-                paper_bgcolor='white',
-                font=dict(color='black', weight="bold"),
-                xaxis=dict(tickfont=dict(color='black')),
-                yaxis=dict(tickfont=dict(color='black'))  # Set interval skala y-axis to 1
+    # Function to update layout for charts
+    def customize_layout(fig):
+        fig.update_layout(
+            title=dict(font=dict(color='black', size=20)),
+            plot_bgcolor='white',
+            paper_bgcolor='white',
+            font=dict(color='black'),
+            xaxis_title=dict(font=dict(color='black')),
+            yaxis_title=dict(font=dict(color='black')),
+            xaxis=dict(tickfont=dict(color='black')),
+            yaxis=dict(tickfont=dict(color='black')),
+            legend=dict(
+                title=dict(text='Kota/Kabupaten', font=dict(color='black')),
+                font=dict(color='black')
             )
-            st.plotly_chart(fig)
-        else:
-            st.write("Data tidak ditemukan untuk pilihan yang dipilih.")
+        )
+        return fig
+
+    # Change the title color of the Kota/Kabupaten dropdown
+    st.markdown("<style>div.row-widget.stSelectbox { color: black; }</style>", unsafe_allow_html=True)
+
+    # Visualisasi data jumlah penduduk
+    if 'Jumlah Penduduk L + P' in region_data.columns:
+        st.subheader(f"Jumlah Penduduk di {region}")
+        fig_population = px.line(region_data, x='Tahun', y='Jumlah Penduduk L + P', color='Kota/Kabupaten',
+                                title=f"Total Population in {region} over the years")
+        st.plotly_chart(customize_layout(fig_population))
+
+    # Visualisasi data jumlah rumah tangga
+    if 'Jumlah Rumah Tangga' in region_data.columns:
+        st.subheader(f"Jumlah Rumah Tangga di {region}")
+        fig_households = px.line(region_data, x='Tahun', y='Jumlah Rumah Tangga', color='Kota/Kabupaten',
+                                title=f"Number of Households in {region} over the years")
+        st.plotly_chart(customize_layout(fig_households))
+
+    # Visualisasi persebaran data (Scatter plot)
+    if 'Luas Wilayah (Km2)' in region_data.columns and 'Jumlah Penduduk L + P' in region_data.columns:
+        st.subheader(f"Persebaran Data di {region}")
+        fig_scatter = px.scatter(region_data, x='Luas Wilayah (Km2)', y='Jumlah Penduduk L + P', color='Kota/Kabupaten',
+                                size='Jumlah Penduduk L + P', title=f"Persebaran Data di {region} (Luas Wilayah vs Jumlah Penduduk)")
+        st.plotly_chart(customize_layout(fig_scatter))
+
+    # Visualisasi pertumbuhan persentase jumlah penduduk per tahun
+    if 'Jumlah Penduduk L + P' in region_data.columns:
+        st.subheader(f"Pertumbuhan Persentase Jumlah Penduduk di {region}")
+        region_data['Growth_Population'] = region_data.groupby('Kota/Kabupaten')['Jumlah Penduduk L + P'].pct_change() * 100
+        fig_growth = px.line(region_data, x='Tahun', y='Growth_Population', color='Kota/Kabupaten',
+                            title=f"Pertumbuhan Persentase Jumlah Penduduk di {region} per Tahun")
+        st.plotly_chart(customize_layout(fig_growth))
+
+    # Menampilkan detail distrik
+    st.subheader(f"Distrik di {region}")
+    districts = region_data['Kota/Kabupaten'].unique()
+    selected_district = st.selectbox("Pilih Distrik untuk melihat detail", districts)
+
+    if selected_district:
+        district_data = region_data[region_data['Kota/Kabupaten'] == selected_district].iloc[-1]
+        st.markdown(f"<span style='color: black;'>Luas Wilayah {selected_district}: {district_data['Luas Wilayah (Km2)']} km²</span>", unsafe_allow_html=True)
+        st.markdown(f"<span style='color: black;'>Jumlah Desa: {district_data['Desa']}</span>", unsafe_allow_html=True)
+        st.markdown(f"<span style='color: black;'>Jumlah Kelurahan: {district_data['Kelurahan']}</span>", unsafe_allow_html=True)
+        st.markdown(f"<span style='color: black;'>Total Desa dan Kelurahan: {district_data['Desa + Kelurahan']}</span>", unsafe_allow_html=True)
+
 if __name__ == "__main__":
     app()
