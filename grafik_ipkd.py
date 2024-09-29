@@ -14,7 +14,7 @@ def app():
         df_ipkd = pd.read_excel('source/ipkd_results.xlsx')  # Default file
 
     # File upload for percentage data
-    uploaded_percentage_file = st.file_uploader("Upload File Persentase (CSV)", type=["xlsx"])
+    uploaded_percentage_file = st.file_uploader("Upload File Persentase (CSV)", type=["csv"])
     if uploaded_percentage_file is not None:
         df_percentage = pd.read_csv(uploaded_percentage_file)
     else:
