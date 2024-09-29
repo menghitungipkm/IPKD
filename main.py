@@ -38,8 +38,8 @@ st.markdown(page_bg, unsafe_allow_html=True)
 with st.sidebar:
     app = option_menu(
         menu_title="Halaman",
-        # options=['Welcome', 'Data Visualization', 'Perhitungan IPKD', 'Menghitung Permutation Importance', 'Prediksi IPKD'],
-        options=['Selamat Datang', 'Data Visualisasi', 'Perhitungan IPKD', 'Grafik IPKD'],
+        # options=['Welcome', 'Visualisasi Data', 'Perhitungan IPKD', 'Menghitung Permutation Importance', 'Prediksi IPKD'],
+        options=['Welcome', 'Visualisasi Data', 'Perhitungan IPKD', 'Grafik IPKD'],
         menu_icon='file-earmark',
         # icons=['house', 'bar-chart', 'coin', 'graph-up', 'view-list'],
         icons=['house', 'bar-chart', 'coin', 'graph-up'],
@@ -53,9 +53,9 @@ with st.sidebar:
     )
 
 # Navigasi halaman berdasarkan pilihan di sidebar
-if app == 'Selamat Datang':
+if app == 'Welcome':
     welcome.app()
-elif app == 'Data Visualisasi':
+elif app == 'Visualisasi Data':
     data_visualisasi.app()
 elif app == 'Perhitungan IPKD':
     perhitungan_ipkd.app()
