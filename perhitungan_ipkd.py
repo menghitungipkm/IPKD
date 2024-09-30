@@ -6,7 +6,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
 import plotly.graph_objects as go
-
+import plotly.express as px
 
 # --- Function to display the weight table ---
 def tampilkan_tabel_bobot():
@@ -268,7 +268,7 @@ def load_data():
     else:
         st.info("Silakan unggah file CSV Anda.")
 def plot_ipkd_results(hasil_akhir_df):
-    # Extract unique provinces and cities/districts from the in-memory dataframe
+    # Extract unique provinces from the in-memory dataframe
     unique_provinces = hasil_akhir_df['Provinsi'].str.upper().unique()
     
     # Selection box for province
@@ -276,31 +276,38 @@ def plot_ipkd_results(hasil_akhir_df):
     
     # Filter cities based on the selected province
     filtered_cities = hasil_akhir_df[hasil_akhir_df['Provinsi'].str.upper() == provinsi]['Kota/Kabupaten'].str.upper().unique()
-    kota = st.selectbox('Pilih Kota/Kabupaten', filtered_cities, key='kota_selectbox')
+
+    # Filter years based on the selected province
+    available_years = hasil_akhir_df[hasil_akhir_df['Provinsi'].str.upper() == provinsi]['Tahun'].unique()
+
+    # Selection box for year with available years
+    year = st.selectbox('Pilih Tahun', available_years, key='year_selectbox')
 
     # Selection box for column (health categories + IPKD)
     kolom_list = ['Kesehatan Balita', 'Kesehatan Reproduksi', 'Pelayanan Kesehatan', 
                   'Penyakit Tidak Menular', 'Penyakit Menular', 'Sanitasi dan Keadaan Lingkungan Hidup', 'Nilai IPKD']
     field = st.selectbox('Pilih Kolom', kolom_list, key='field_selectbox')
 
-    st.subheader(f'Nilai IPKD Provinsi {provinsi} di {kota}')
-    st.subheader(f'kolom {field}')
+    st.subheader(f'Grafik {field} Provinsi {provinsi} Tahun {year}')
 
-    # Filter data for the selected city/district
-    data = hasil_akhir_df[hasil_akhir_df['Kota/Kabupaten'].str.upper() == kota.upper()]
+    # Filter data for the selected province and year
+    data = hasil_akhir_df[(hasil_akhir_df['Kota/Kabupaten'].str.upper().isin(filtered_cities)) & 
+                           (hasil_akhir_df['Tahun'] == year)]
 
-    # Get the year and field values
-    tahun = data['Tahun'].astype(str).tolist()
-    value = data[field].tolist()
+    # Get the city names and their corresponding values
+    city_names = data['Kota/Kabupaten'].str.upper().tolist()
+    values = data[field].tolist()
+
+    colors = [f'rgba({np.random.randint(0, 255)}, {np.random.randint(0, 255)}, {np.random.randint(0, 255)}, 0.8)' for _ in range(len(city_names))]
 
     # Create the plot using Plotly
     fig = go.Figure()
-    fig.add_trace(go.Scatter(x=tahun, y=value, mode='lines+markers', name=field, line=dict(color='red', width=2)))
+    fig.add_trace(go.Bar(x=city_names, y=values, name=field, marker=dict(color='blue')))
 
     # Update layout
     fig.update_layout(
-        title=dict(text=f"Grafik {field} di {kota} ({provinsi})", font=dict(color='black', size=20)),
-        xaxis_title=dict(text='Tahun', font=dict(color='black', size=14, family="Arial", weight="bold")),
+        title=dict(text=f"Perbandingan {field} di Provinsi {provinsi} Tahun {year}", font=dict(color='black', size=20)),
+        xaxis_title=dict(text='Kota/Kabupaten', font=dict(color='black', size=14, family="Arial", weight="bold")),
         yaxis_title=dict(text='Nilai', font=dict(color='black', size=14, family="Arial", weight="bold")),
         template='plotly_dark',
         plot_bgcolor='rgba(0,0,0,0)',
@@ -312,6 +319,7 @@ def plot_ipkd_results(hasil_akhir_df):
 
     # Display the plot in Streamlit
     st.plotly_chart(fig)
+
 
 # Modify the main app function
 def app():
