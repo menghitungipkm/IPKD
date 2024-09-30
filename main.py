@@ -17,7 +17,7 @@ page_bg = """
         background-color: #2e2e2e;
     }
     button p {
-        color: white; /* Mengubah warna teks dalam <p> di dalam tombol menjadi putih */
+        color: black; 
     }
     h1, h2, h3, h4, h5, p, li {
         color: black;
