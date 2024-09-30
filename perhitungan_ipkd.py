@@ -5,6 +5,8 @@ import xlsxwriter
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
+import plotly.graph_objects as go
+
 
 # --- Function to display the weight table ---
 def tampilkan_tabel_bobot():
@@ -20,12 +22,14 @@ import pandas as pd
 import streamlit as st
 
 # --- Function to split data and calculate IPKD --- 
+# --- Function to split data and calculate IPKD --- 
 def bagi_data_per_kota_kabupaten_dan_tahun(df):
     kota_kabupaten_list = df['KOTA/KABUPATEN'].unique()
     provinsi_list = df['PROVINSI'].unique()
 
     kota_kabupaten_dfs = {}
 
+    # Calculate minimum and maximum values of numeric columns
     min_values = df.select_dtypes(include='number').min()
     max_values = df.select_dtypes(include='number').max()
 
@@ -69,12 +73,15 @@ def bagi_data_per_kota_kabupaten_dan_tahun(df):
             indikator_df = pd.DataFrame({
                 'Nama Indikator': filtered_numeric_cols.columns,
                 'Nilai Indikator': filtered_numeric_cols.mean().values,
+                'Standard Minimum': min_values[filtered_numeric_cols.columns].values,  # Add standard min
+                'Standard Maximum': max_values[filtered_numeric_cols.columns].values,  # Add standard max
                 'Penyetaraan Positif': [100 - value if value < 50 else value for value in filtered_numeric_cols.mean().values],
             })
 
             indikator_df['Bobot'] = [bobot_data[i] for i in valid_indices]
 
-            indikator_df['Indeks Indikator'] = (indikator_df['Nilai Indikator'] - min_values[indikator_df['Nama Indikator'].values].values) / (max_values[indikator_df['Nama Indikator'].values].values - min_values[indikator_df['Nama Indikator'].values].values)
+            # Calculate Indeks Indikator
+            indikator_df['Indeks Indikator'] = (indikator_df['Nilai Indikator'] - indikator_df['Standard Minimum']) / (indikator_df['Standard Maximum'] - indikator_df['Standard Minimum'])
 
             kategori_labels = []
             for index in range(len(indikator_df)):
@@ -93,10 +100,12 @@ def bagi_data_per_kota_kabupaten_dan_tahun(df):
 
             indikator_df['Kategori'] = kategori_labels
 
+            # Initialize indeks kelompok per kategori
             indeks_kelompok = {kat: 0 for kat in kategori}
             kategori_total_bobot = indikator_df.groupby('Kategori')['Bobot'].transform('sum')
             indikator_df['Proporsi Bobot'] = indikator_df['Bobot'] / kategori_total_bobot
 
+            # Calculate Indeks Kelompok Indikator
             for kat in kategori:
                 if kat in indikator_df['Kategori'].values:
                     indeks_kelompok[kat] = (indikator_df.loc[indikator_df['Kategori'] == kat, 'Indeks Indikator'] * indikator_df.loc[indikator_df['Kategori'] == kat, 'Proporsi Bobot']).sum()
@@ -121,7 +130,7 @@ def bagi_data_per_kota_kabupaten_dan_tahun(df):
                 "Kota/Kabupaten": [kota_kabupaten],
                 "Tahun": [tahun],
                 **{kategori[i]: [nilai_kategori[i]] for i in range(len(nilai_kategori))},
-                "Nilai IPKD": [ipkd]
+                "Nilai IPKD": [ipkd],
             })
 
             hasil_akhir_df = pd.concat([hasil_akhir_df, baris_baru], ignore_index=True)
@@ -130,6 +139,7 @@ def bagi_data_per_kota_kabupaten_dan_tahun(df):
     st.dataframe(hasil_akhir_df)
 
     return kota_kabupaten_dfs, hasil_akhir_df
+
 
 
 # --- Function to download data as Excel ---
@@ -257,11 +267,56 @@ def load_data():
         st.dataframe(df.head())
     else:
         st.info("Silakan unggah file CSV Anda.")
+def plot_ipkd_results(hasil_akhir_df):
+    # Extract unique provinces and cities/districts from the in-memory dataframe
+    unique_provinces = hasil_akhir_df['Provinsi'].str.upper().unique()
+    
+    # Selection box for province
+    provinsi = st.selectbox('Pilih Provinsi', unique_provinces, key='provinsi_selectbox')
+    
+    # Filter cities based on the selected province
+    filtered_cities = hasil_akhir_df[hasil_akhir_df['Provinsi'].str.upper() == provinsi]['Kota/Kabupaten'].str.upper().unique()
+    kota = st.selectbox('Pilih Kota/Kabupaten', filtered_cities, key='kota_selectbox')
 
-# --- Main app function ---
+    # Selection box for column (health categories + IPKD)
+    kolom_list = ['Kesehatan Balita', 'Kesehatan Reproduksi', 'Pelayanan Kesehatan', 
+                  'Penyakit Tidak Menular', 'Penyakit Menular', 'Sanitasi dan Keadaan Lingkungan Hidup', 'Nilai IPKD']
+    field = st.selectbox('Pilih Kolom', kolom_list, key='field_selectbox')
+
+    st.subheader(f'Nilai IPKD Provinsi {provinsi} di {kota}')
+    st.subheader(f'kolom {field}')
+
+    # Filter data for the selected city/district
+    data = hasil_akhir_df[hasil_akhir_df['Kota/Kabupaten'].str.upper() == kota.upper()]
+
+    # Get the year and field values
+    tahun = data['Tahun'].astype(str).tolist()
+    value = data[field].tolist()
+
+    # Create the plot using Plotly
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(x=tahun, y=value, mode='lines+markers', name=field, line=dict(color='red', width=2)))
+
+    # Update layout
+    fig.update_layout(
+        title=dict(text=f"Grafik {field} di {kota} ({provinsi})", font=dict(color='black', size=20)),
+        xaxis_title=dict(text='Tahun', font=dict(color='black', size=14, family="Arial", weight="bold")),
+        yaxis_title=dict(text='Nilai', font=dict(color='black', size=14, family="Arial", weight="bold")),
+        template='plotly_dark',
+        plot_bgcolor='rgba(0,0,0,0)',
+        paper_bgcolor='white',
+        font=dict(color='black', weight="bold"),
+        xaxis=dict(tickfont=dict(color='black')),
+        yaxis=dict(tickfont=dict(color='black'))
+    )
+
+    # Display the plot in Streamlit
+    st.plotly_chart(fig)
+
+# Modify the main app function
 def app():
     st.title("Perhitungan IPKD")
-    
+
     # Load data
     load_data()
 
@@ -277,6 +332,21 @@ def app():
 
         elif task == "Hitung IPKD":
             st.write("## Perhitungan IPKD")
-            kota_kabupaten_dfs, hasil_akhir_df = bagi_data_per_kota_kabupaten_dan_tahun(df)  # Unpack the returned tuple
-            download_excel(kota_kabupaten_dfs, hasil_akhir_df)  # Pass both DataFrames
-  # Now this should work correctly
+            
+            # Step 1: Perform the IPKD calculation
+            kota_kabupaten_dfs, hasil_akhir_df = bagi_data_per_kota_kabupaten_dan_tahun(df)
+            
+            # Store the final results in session state
+            st.session_state['hasil_akhir_df'] = hasil_akhir_df
+            
+            # Provide option to download the results as an Excel file
+            download_excel(kota_kabupaten_dfs, hasil_akhir_df)
+
+            # Step 3: Plot the line graph for selected province and city
+            st.write("## Visualisasi Hasil IPKD")
+            plot_ipkd_results(hasil_akhir_df)  # Display the plot directly after the table
+
+
+# Run the app
+if __name__ == '__main__':
+    app()
