@@ -13,6 +13,9 @@ def app():
     else:
         df_ipkd = pd.read_excel('source/ipkd_results.xlsx')  # Default file
 
+    # Convert column names to lowercase
+    df_ipkd.columns = df_ipkd.columns.str.lower()
+
     # File upload for percentage data
     uploaded_percentage_file = st.file_uploader("Upload File Persentase (CSV)", type=["csv"])
     if uploaded_percentage_file is not None:
@@ -20,34 +23,33 @@ def app():
     else:
         df_percentage = pd.read_csv('source/datasetreal.csv')  # Default file
 
+    # Convert column names to lowercase
+    df_percentage.columns = df_percentage.columns.str.lower()
+
     # Extract unique provinces and cities/districts
-    unique_provinces = df_ipkd['Provinsi'].str.upper().unique()
-    unique_cities = df_ipkd['Kota/Kabupaten'].str.upper().unique()
+    unique_provinces = df_ipkd['provinsi'].str.upper().unique()
+    unique_cities = df_ipkd['kota/kabupaten'].str.upper().unique()
 
     # PEMILIHAN #
     provinsi = st.selectbox('Pilih Provinsi', unique_provinces, key='provinsi_selectbox')
     
     # Filter cities based on the selected province
-    filtered_cities = df_ipkd[df_ipkd['Provinsi'].str.upper() == provinsi]['Kota/Kabupaten'].str.upper().unique()
+    filtered_cities = df_ipkd[df_ipkd['provinsi'].str.upper() == provinsi]['kota/kabupaten'].str.upper().unique()
     kota = st.selectbox('Pilih Kota/Kabupaten', filtered_cities, key='kota_selectbox')
 
-    kolom_list = ['Kesehatan Balita', 'Kesehatan Reproduksi', 'Pelayanan Kesehatan', 
-                  'Penyakit Tidak Menular', 'Penyakit Menular', 'Sanitasi dan Keadaan Lingkungan Hidup']
+    kolom_list = ['kesehatan balita', 'kesehatan reproduksi', 'pelayanan kesehatan', 
+                  'penyakit tidak menular', 'penyakit menular', 'sanitasi dan keadaan lingkungan hidup']
 
     field = st.selectbox('Pilih Kolom', kolom_list, key='field_selectbox')
 
     st.subheader(f'Nilai IPKD Provinsi {provinsi} di {kota}')
-
     st.subheader(f'kolom {field}')
 
     # MENAMPILKAN PLOT #
     # Ensure that comparisons are made correctly
-    if 'Kota' in kota:
-        data = df_ipkd[df_ipkd['Kota/Kabupaten'].str.upper() == kota.upper()]
-    else:
-        data = df_ipkd[df_ipkd['Kota/Kabupaten'].str.upper() == kota.upper()]
-
-    tahun = data['Tahun'].astype(str).str[:4].tolist()
+    data = df_ipkd[df_ipkd['kota/kabupaten'].str.upper() == kota.upper()]
+    
+    tahun = data['tahun'].astype(str).str[:4].tolist()
     value = data[field].tolist()
 
     # Using Plotly to create an interactive graph
@@ -70,35 +72,34 @@ def app():
 
     # TAMPILAN TABEL
     st.subheader('Tabel')
-    tampilan_data = data[['Provinsi', 'Kota/Kabupaten', field, 'Tahun']]
+    tampilan_data = data[['provinsi', 'kota/kabupaten', field, 'tahun']]
     st.write(tampilan_data)
 
     # Langkah 1: Pilih Provinsi for percentage data
-    unique_provinces_percentage = df_percentage['PROVINSI'].str.upper().unique()
+    unique_provinces_percentage = df_percentage['provinsi'].str.upper().unique()
     provinsi_percentage = st.selectbox("Pilih Provinsi untuk Persentase", unique_provinces_percentage)
 
     # Langkah 2: Pilih Kabupaten/Kota berdasarkan Provinsi
-    filtered_kabupaten = df_percentage[df_percentage['PROVINSI'].str.upper() == provinsi_percentage]['KOTA/KABUPATEN'].str.upper().unique()
+    filtered_kabupaten = df_percentage[df_percentage['provinsi'].str.upper() == provinsi_percentage]['kota/kabupaten'].str.upper().unique()
     kabupaten = st.selectbox("Pilih Kabupaten/Kota", filtered_kabupaten)
 
     # Langkah 3: Pilih opsi untuk grafik
-    # You can automate the options for the graph based on the columns in the DataFrame
     options_for_graph = df_percentage.columns.tolist()
-    options_for_graph.remove('PROVINSI')  # Exclude the province column
-    options_for_graph.remove('KOTA/KABUPATEN')  # Exclude the city/district column
-    options_for_graph.remove('TAHUN')  # Exclude the year column
+    options_for_graph.remove('provinsi')  # Exclude the province column
+    options_for_graph.remove('kota/kabupaten')  # Exclude the city/district column
+    options_for_graph.remove('tahun')  # Exclude the year column
     pilihan_grafik = st.selectbox("Pilih Data untuk Ditampilkan", options_for_graph)
 
     # Filter data berdasarkan pilihan pengguna
-    if 'PROVINSI' in df_percentage.columns and 'KOTA/KABUPATEN' in df_percentage.columns:
-        df_filtered = df_percentage[(df_percentage['PROVINSI'] == provinsi_percentage) & (df_percentage['KOTA/KABUPATEN'] == kabupaten)]
+    if 'provinsi' in df_percentage.columns and 'kota/kabupaten' in df_percentage.columns:
+        df_filtered = df_percentage[(df_percentage['provinsi'] == provinsi_percentage) & (df_percentage['kota/kabupaten'] == kabupaten)]
 
         # Langkah 4: Tampilkan grafik berdasarkan pilihan
         if not df_filtered.empty:
             st.write(f"Menampilkan grafik {pilihan_grafik} untuk {kabupaten}, {provinsi_percentage}")
             
             # Plot data dengan Plotly
-            fig = px.line(df_filtered, x='TAHUN', y=pilihan_grafik, markers=True)
+            fig = px.line(df_filtered, x='tahun', y=pilihan_grafik, markers=True)
             fig.update_traces(line=dict(color='red', width=2))  
             fig.update_layout(
                 title=dict(text=f"Grafik {pilihan_grafik} di {kabupaten} ({provinsi_percentage})", font=dict(color='black', size=20)),
@@ -109,10 +110,11 @@ def app():
                 paper_bgcolor='white',
                 font=dict(color='black', weight="bold"),
                 xaxis=dict(tickfont=dict(color='black')),
-                yaxis=dict(tickfont=dict(color='black'))  # Set interval skala y-axis to 1
+                yaxis=dict(tickfont=dict(color='black'))  
             )
             st.plotly_chart(fig)
         else:
             st.write("Data tidak ditemukan untuk pilihan yang dipilih.")
+
 if __name__ == "__main__":
     app()
