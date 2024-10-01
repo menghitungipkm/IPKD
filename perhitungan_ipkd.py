@@ -93,7 +93,7 @@ def bagi_data_per_kota_kabupaten_dan_tahun(df):
                     kategori_labels.append(kategori[2])
                 elif index <= 17:
                     kategori_labels.append(kategori[3])
-                elif index <= 23:
+                elif index <= 22:
                     kategori_labels.append(kategori[4])
                 else:
                     kategori_labels.append(kategori[5])
