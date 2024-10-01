@@ -73,9 +73,9 @@ def bagi_data_per_kota_kabupaten_dan_tahun(df):
             indikator_df = pd.DataFrame({
                 'Nama Indikator': filtered_numeric_cols.columns,
                 'Nilai Indikator': filtered_numeric_cols.mean().values,
+                'Penyetaraan Positif': [100 - value if value < 50 else value for value in filtered_numeric_cols.mean().values],
                 'Standard Minimum': min_values[filtered_numeric_cols.columns].values,  # Add standard min
                 'Standard Maximum': max_values[filtered_numeric_cols.columns].values,  # Add standard max
-                'Penyetaraan Positif': [100 - value if value < 50 else value for value in filtered_numeric_cols.mean().values],
             })
 
             indikator_df['Bobot'] = [bobot_data[i] for i in valid_indices]
