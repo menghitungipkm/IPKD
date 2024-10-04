@@ -34,10 +34,13 @@ def bagi_data_per_kota_kabupaten_dan_tahun(df):
     max_values = df.select_dtypes(include='number').max()
 
     bobot_data = [
-        5, 5, 5, 3, 3, 3, 5, 5, 4, 5,
-        4, 3, 5, 3, 2, 4, 2, 1, 2, 1,
-        5, 4, 4, 3, 2, 5, 5, 2, 1, 4,
-        5, 2, 1, 1, 5, 5, 5, 4, 
+        5, 5, 5, 5, 4, 1, 1, 1, 2, 1,
+        2, 2, 1, 5, 3, 2, 3, 4, 5, 5,
+        1, 1, 1, 4, 4, 2, 1, 3, 5, 1,
+        4, 5, 5, 5, 5, 3, 2, 1, 4, 2,
+        4, 3, 5, 4, 2, 4, 3, 1, 4, 5,
+        5, 3, 1, 2, 5, 5, 3, 1, 1, 2,
+        4, 1, 3, 5, 3
     ]
 
     kategori = [
@@ -87,13 +90,13 @@ def bagi_data_per_kota_kabupaten_dan_tahun(df):
             for index in range(len(indikator_df)):
                 if index <= 4:
                     kategori_labels.append(kategori[0])
-                elif index <= 8:
+                elif index <= 12:
                     kategori_labels.append(kategori[1])
-                elif index <= 15:
+                elif index <= 25:
                     kategori_labels.append(kategori[2])
-                elif index <= 19:
+                elif index <= 30:
                     kategori_labels.append(kategori[3])
-                elif index <= 22:
+                elif index <= 34:
                     kategori_labels.append(kategori[4])
                 else:
                     kategori_labels.append(kategori[5])
