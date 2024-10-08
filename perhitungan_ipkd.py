@@ -45,7 +45,7 @@ def bagi_data_per_kota_kabupaten_dan_tahun(df):
 
     kategori = [
         "Kesehatan Balita",
-        "Kesehatan Reproduksi",
+        "Kesehatan Ibu",
         "Pelayanan Kesehatan",
         "Penyakit Tidak Menular",
         "Penyakit Menular",
@@ -53,7 +53,7 @@ def bagi_data_per_kota_kabupaten_dan_tahun(df):
     ]
 
     hasil_akhir_df = pd.DataFrame(columns=["Provinsi", "Kota/Kabupaten", "Tahun", "Kesehatan Balita", 
-                                           "Kesehatan Reproduksi", "Pelayanan Kesehatan", 
+                                           "Kesehatan Ibu", "Pelayanan Kesehatan", 
                                            "Penyakit Tidak Menular", "Penyakit Menular", 
                                            "Sanitasi dan Keadaan Lingkungan Hidup", "Nilai IPKD"])
 
@@ -76,7 +76,6 @@ def bagi_data_per_kota_kabupaten_dan_tahun(df):
             indikator_df = pd.DataFrame({
                 'Nama Indikator': filtered_numeric_cols.columns,
                 'Nilai Indikator': filtered_numeric_cols.mean().values,
-                'Penyetaraan Positif': [100 - value if value < 50 else value for value in filtered_numeric_cols.mean().values],
                 'Standard Minimum': min_values[filtered_numeric_cols.columns].values,  # Add standard min
                 'Standard Maximum': max_values[filtered_numeric_cols.columns].values,  # Add standard max
             })
