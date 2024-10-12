@@ -87,15 +87,15 @@ def bagi_data_per_kota_kabupaten_dan_tahun(df):
 
             kategori_labels = []
             for index in range(len(indikator_df)):
-                if index <= 4:
+                if index <= 34:
                     kategori_labels.append(kategori[0])
-                elif index <= 15:
+                elif index <= 46:
                     kategori_labels.append(kategori[1])
-                elif index <= 27:
+                elif index <= 54:
                     kategori_labels.append(kategori[2])
-                elif index <= 32:
+                elif index <= 58:
                     kategori_labels.append(kategori[3])
-                elif index <= 36:
+                elif index <= 59:
                     kategori_labels.append(kategori[4])
                 else:
                     kategori_labels.append(kategori[5])
