@@ -83,11 +83,16 @@ def bagi_data_per_kota_kabupaten_dan_tahun(df):
             indikator_df['Bobot'] = [bobot_data[i] for i in valid_indices]
 
             # Calculate Indeks Indikator
-            indikator_df['Indeks Indikator'] = np.where(
-                indikator_df['Nilai Indikator'] == indikator_df['Standard Minimum'],
-                0,
-                (indikator_df['Nilai Indikator'] - indikator_df['Standard Minimum']) / (indikator_df['Standard Maximum'] - indikator_df['Standard Minimum'])
+            # Adjust the Standard Minimum to 0 if Nilai Indikator is equal to Standard Minimum
+            adjusted_min = np.where(
+                indikator_df['Nilai Indikator'] == indikator_df['Standard Minimum'], 
+                0, 
+                indikator_df['Standard Minimum']
             )
+            
+            # Calculate Indeks Indikator using the adjusted minimum
+            indikator_df['Indeks Indikator'] = (indikator_df['Nilai Indikator'] - adjusted_min) / (indikator_df['Standard Maximum'] - adjusted_min)
+
             
             kategori_labels = []
             for index in range(len(indikator_df)):
