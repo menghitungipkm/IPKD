@@ -196,7 +196,7 @@ def visualize_results(kota_kabupaten_dfs):
         # Asumsikan ROV adalah Indeks Indikator * Bobot (atau sesuai definisi Anda)
         # Anda bisa menyesuaikan visualisasi sesuai kebutuhan
         st.write("##### Visualisasi Indeks Indikator per Kategori")
-        kategori_cols = ["Kesehatan Balita", "Kesehatan Reproduksi", "Pelayanan Kesehatan", 
+        kategori_cols = ["Kesehatan Balita", "Kesehatan Ibu", "Pelayanan Kesehatan", 
                          "Penyakit Tidak Menular", "Penyakit Menular", "Sanitasi dan Keadaan Lingkungan Hidup"]
         nilai_kategori = row[kategori_cols].values
 
@@ -286,7 +286,7 @@ def plot_ipkd_results(hasil_akhir_df):
     year = st.selectbox('Pilih Tahun', available_years, key='year_selectbox')
 
     # Selection box for column (health categories + IPKD)
-    kolom_list = ['Kesehatan Balita', 'Kesehatan Reproduksi', 'Pelayanan Kesehatan', 
+    kolom_list = ['Kesehatan Balita', 'Kesehatan Ibu', 'Pelayanan Kesehatan', 
                   'Penyakit Tidak Menular', 'Penyakit Menular', 'Sanitasi dan Keadaan Lingkungan Hidup', 'Nilai IPKD']
     field = st.selectbox('Pilih Kolom', kolom_list, key='field_selectbox')
 
