@@ -25,7 +25,7 @@ def tampilkan_tabel_normalisasi():
     excel_file_path = 'source/hasil_normalisasi_klusterisasi.xlsx'  # Adjust the file path if necessary
     try:
         df_normalisasi = pd.read_excel(excel_file_path)
-        st.write("### Tabel Hasil Normalisasi dan Klusterisasi:")
+        st.write("### Tabel Hasil Standarisasi dan Klusterisasi:")
         st.dataframe(df_normalisasi)  # Menampilkan tabel normalisasi
     except FileNotFoundError:
         st.error(f"File '{excel_file_path}' tidak ditemukan. Pastikan file tersebut ada di jalur yang benar.")
