@@ -16,6 +16,19 @@ def tampilkan_tabel_bobot():
     # Tampilkan tabel di Streamlit
     st.write("### Tabel Bobot untuk Indikator:")
     st.dataframe(df_bobot) # Menambahkan kolom "Bobot" di awal
+        # Menambahkan tabel dari file Excel
+    tampilkan_tabel_normalisasi()
+
+# --- Function to display the normalization table from the Excel file ---
+def tampilkan_tabel_normalisasi():
+    # Read the Excel file 'hasil_normalisasi_klusterisasi.xlsx'
+    excel_file_path = 'source/hasil_normalisasi_klusterisasi.xlsx'  # Adjust the file path if necessary
+    try:
+        df_normalisasi = pd.read_excel(excel_file_path)
+        st.write("### Tabel Hasil Normalisasi dan Klusterisasi:")
+        st.dataframe(df_normalisasi)  # Menampilkan tabel normalisasi
+    except FileNotFoundError:
+        st.error(f"File '{excel_file_path}' tidak ditemukan. Pastikan file tersebut ada di jalur yang benar.")
 
 # --- Function to split data and calculate IPKD ---
 import pandas as pd
