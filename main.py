@@ -20,7 +20,7 @@ page_bg = """
         color: black; 
     }
     h1, h2, h3, h4, h5, p, li {
-        color: white;
+        color: black;
     }
     .menu-title {
         color: black;
