@@ -11,7 +11,7 @@ st.set_page_config(page_title="Aplikasi IPKD", page_icon="📈")
 page_bg = """
 <style>
     [data-testid="stAppViewContainer"], [data-testid="stToolbar"], [data-testid="stHeader"] {
-        background-color: #000000;
+        background-color: #fefefe;
     }
     [data-testid="stSidebarContent"] {
         background-color: #2e2e2e;
