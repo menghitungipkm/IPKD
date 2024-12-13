@@ -23,7 +23,7 @@ page_bg = """
         color: black;
     }
     .menu-title {
-        color: white;
+        color: black;
     }
     .container-xxl {
         background-color: black; 
